@@ -24,9 +24,13 @@ import javax.ws.rs.core.MediaType;
 import javax.xml.bind.JAXBException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyListOf;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -37,6 +41,7 @@ public class PersonEndpointTest {
     private static PersonEndpoint personEndpoint;
     @Mock
     private PersonService personService;
+    private List<Person> personList;
 
     @Before
     public void setup () {
@@ -44,6 +49,16 @@ public class PersonEndpointTest {
         dispatcher = MockDispatcherFactory.createDispatcher();
         personEndpoint = new PersonEndpoint(personService);
         dispatcher.getRegistry().addSingletonResource(personEndpoint);
+
+        personList = new ArrayList<>();
+
+        Person person = new Person();
+        person.setDni(1234);
+        person.setName("Pepe");
+        person.setLastName("Argento");
+        person.setAge(55);
+
+        personList.add(person);
     }
 
     @After
@@ -75,7 +90,7 @@ public class PersonEndpointTest {
         MockHttpRequest request = createRequestParameter("/",1234);
 
         ArgumentCaptor<Person> personCaptor = ArgumentCaptor.forClass(Person.class);
-        when(personService.createPerson(personCaptor.capture())).thenThrow(Throwable.class);
+        when(personService.createPerson(personCaptor.capture())).thenAnswer(new ArgumentAnswer<Person>(0));
 
         MockHttpResponse response = new MockHttpResponse();
         dispatcher.invoke(request, response);
@@ -85,6 +100,20 @@ public class PersonEndpointTest {
 
         assertEquals(1234 ,person.getDni());
         assertEquals(201, response.getStatus());
+    }
+
+    @Test
+    public void shouldGetPersons() throws Exception {
+
+        MockHttpRequest request = createRequestToGet("/");
+
+        when(personService.findPersons()).thenReturn(personList);
+
+        MockHttpResponse response = new MockHttpResponse();
+        dispatcher.invoke(request, response);
+
+        assertEquals(false, response.getContentAsString().isEmpty());
+        assertEquals(200, response.getStatus());
     }
 
     public String getPrettyPrintJSON(String input) {
@@ -113,8 +142,6 @@ public class PersonEndpointTest {
             int requestBody) throws URISyntaxException, JAXBException {
 
         MockHttpRequest request = MockHttpRequest.post(path + requestBody);
-        request.accept(MediaType.TEXT_PLAIN);
-        request.contentType(MediaType.TEXT_PLAIN_TYPE);
         return request;
     }
 
@@ -130,4 +157,9 @@ public class PersonEndpointTest {
         return request;
     }
 
+    public MockHttpRequest createRequestToGet(String path) throws URISyntaxException, JAXBException {
+
+        MockHttpRequest request = MockHttpRequest.get(path);
+        return request;
+    }
 }

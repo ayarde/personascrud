@@ -1,6 +1,7 @@
 package com.mavha.personascrud.service;
 
 import com.mavha.personascrud.domain.Person;
+import com.mavha.personascrud.exception.PersonAlreadyExistException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
