@@ -50,6 +50,9 @@ public class PersonEndpoint {
 
         Person person = new Person();
         person.setDni(dni);
+        person.setName("NN");
+        person.setLastName("NN");
+        person.setAge(0);
 
         Validate.notNull(person, "Empty request is not allowed");
 
